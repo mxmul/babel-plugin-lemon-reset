@@ -1,0 +1,30 @@
+diff --git a/node_modules/react-benchmark/lib/webpack.js b/node_modules/react-benchmark/lib/webpack.js
+index f71d5b2..0a9edd0 100644
+--- a/node_modules/react-benchmark/lib/webpack.js
++++ b/node_modules/react-benchmark/lib/webpack.js
+@@ -37,7 +37,9 @@ exports.compile = async (outputPath, benchmarkPath, debug) => {
+           // Prevent duplicate react's from being bundled
+           react: resolvePackage(benchmarkPath, 'react'),
+           'react-dom': resolvePackage(benchmarkPath, 'react-dom')
+-        }
++        },
++        // we symlink the same sources into two dirs with different babel configs
++        symlinks: false,
+       },
+       entry: {
+         bundle: path.join(__dirname, 'client.js')
+@@ -53,6 +55,14 @@ exports.compile = async (outputPath, benchmarkPath, debug) => {
+       module: {
+         noParse: [/node_modules\/benchmark\//], // Parsing benchmark causes it to break
+         rules: [
++          // lemon-reset requires css-loader
++          {
++            test: /\.css$/i,
++            loader: 'css-loader',
++            options: {
++              onlyLocals: true,
++            },
++          },
+           {
+             test: /\.jsx?$/,
+             exclude: path =>
