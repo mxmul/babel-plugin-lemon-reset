@@ -50,7 +50,9 @@
     "url": "https://github.com/mxmul/babel-plugin-lemon-reset/issues"
   },
   "homepage": "https://github.com/mxmul/babel-plugin-lemon-reset#readme",
-  "dependencies": {},
+  "dependencies": {
+    "babel-plugin-syntax-jsx": "^6.18.0"
+  },
   "files": [
     "lib",
     "src"

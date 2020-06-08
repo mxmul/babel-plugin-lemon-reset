@@ -5,9 +5,6 @@ import plugin from '../src';
 pluginTester({
   plugin,
   babelOptions: {
-    parserOpts: {
-      plugins: ['jsx']
-    },
     generatorOpts: {
       retainLines: true
     }

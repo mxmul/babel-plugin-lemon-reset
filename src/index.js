@@ -4,6 +4,7 @@ export default function transform({types: t}) {
 
   return {
     name: 'babel-plugin-lemon-reset',
+    inherits: require('babel-plugin-syntax-jsx'),
     visitor: {
       Program(path) {
         lemonResetStylesIdentifier = path.scope.generateUidIdentifier(
