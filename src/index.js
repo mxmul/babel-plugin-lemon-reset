@@ -76,7 +76,7 @@ function replaceDomTagReferencePath({
         );
       }
     }
-  } else {
+  } else if (!referencePath.parent.type.includes('Type')) {
     // Replace all non-JSX tag references with the dom tag string literal
     referencePath.replaceWith(t.stringLiteral(domTag));
   }
