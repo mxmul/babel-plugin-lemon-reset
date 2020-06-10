@@ -76,7 +76,7 @@ function replaceDomTagReferencePath({
         );
       }
     }
-  } else if (referencePath.isIdentifier()) {
+  } else {
     // Replace all non-JSX tag references with the dom tag string literal
     referencePath.replaceWith(t.stringLiteral(domTag));
   }
@@ -117,15 +117,17 @@ export default function transform({types: t}) {
               const moduleLocalName = specifier.local.name;
               const moduleBindings = path.scope.bindings[moduleLocalName];
               moduleBindings.referencePaths.forEach((referencePath) => {
-                const domTag = lemonTagToDomTag(
-                  referencePath.parent.property.name
-                );
-                replaceDomTagReferencePath({
-                  t,
-                  lemonResetStylesIdentifier,
-                  referencePath: referencePath.parentPath,
-                  domTag
-                });
+                if (referencePath.parent.property) {
+                  const domTag = lemonTagToDomTag(
+                    referencePath.parent.property.name
+                  );
+                  replaceDomTagReferencePath({
+                    t,
+                    lemonResetStylesIdentifier,
+                    referencePath: referencePath.parentPath,
+                    domTag
+                  });
+                }
               });
             } else {
               const domTag = lemonTagToDomTag(specifier.imported.name);
