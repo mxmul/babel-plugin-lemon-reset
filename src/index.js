@@ -43,14 +43,19 @@ export default function transform({types: t}) {
                 if (referencePath.container.type === 'JSXOpeningElement') {
                   // Replace all tagRef attributes with regular refs
                   referencePath.container.attributes.forEach((attribute) => {
-                    if (attribute.name.name === 'tagRef') {
+                    if (
+                      attribute.type === 'JSXAttribute' &&
+                      attribute.name.name === 'tagRef'
+                    ) {
                       attribute.name.name = 'ref';
                     }
                   });
 
                   // Add or prepend className
                   const classNameAttrIdx = referencePath.parent.attributes.findIndex(
-                    (attribute) => attribute.name.name === 'className'
+                    (attribute) =>
+                      attribute.type === 'JSXAttribute' &&
+                      attribute.name.name === 'className'
                   );
                   if (classNameAttrIdx >= 0) {
                     const attrValuePath = referencePath.parentPath.get(
