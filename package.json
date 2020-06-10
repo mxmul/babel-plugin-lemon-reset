@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-lemon-reset",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Fully remove the Lemon Reset runtime with Babel.",
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.10.1",
