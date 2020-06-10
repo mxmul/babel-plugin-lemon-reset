@@ -1,3 +1,87 @@
+function lemonTagToDomTag(name) {
+  let domTag = name.toLowerCase();
+  if (domTag === 'domobject') {
+    domTag = 'object';
+  }
+
+  return domTag;
+}
+
+function replaceDomTagReferencePath({
+  t,
+  lemonResetStylesIdentifier,
+  referencePath,
+  domTag
+}) {
+  const className = `lemon--${domTag}`;
+
+  if (
+    referencePath.isJSXIdentifier() ||
+    referencePath.isJSXMemberExpression()
+  ) {
+    referencePath.node.name = domTag;
+    referencePath.node.type = 'JSXIdentifier'; // Is this allowed??
+    if (referencePath.container.type === 'JSXOpeningElement') {
+      // Replace all tagRef attributes with regular refs
+      referencePath.container.attributes.forEach((attribute) => {
+        if (
+          attribute.type === 'JSXAttribute' &&
+          attribute.name.name === 'tagRef'
+        ) {
+          attribute.name.name = 'ref';
+        }
+      });
+
+      // Add or prepend className
+      const classNameAttrIdx = referencePath.parent.attributes.findIndex(
+        (attribute) =>
+          attribute.type === 'JSXAttribute' &&
+          attribute.name.name === 'className'
+      );
+      if (classNameAttrIdx >= 0) {
+        const attrValuePath = referencePath.parentPath.get(
+          `attributes.${classNameAttrIdx}.value`
+        );
+        attrValuePath.replaceWith(
+          t.jsxExpressionContainer(
+            t.binaryExpression(
+              '+',
+              t.memberExpression(
+                lemonResetStylesIdentifier,
+                t.stringLiteral(className),
+                true
+              ),
+              t.binaryExpression(
+                '+',
+                t.stringLiteral(' '),
+                attrValuePath.isJSXExpressionContainer()
+                  ? attrValuePath.node.expression
+                  : attrValuePath.node
+              )
+            )
+          )
+        );
+      } else {
+        referencePath.parent.attributes.push(
+          t.jsxAttribute(
+            t.jsxIdentifier('className'),
+            t.jsxExpressionContainer(
+              t.memberExpression(
+                lemonResetStylesIdentifier,
+                t.stringLiteral(className),
+                true
+              )
+            )
+          )
+        );
+      }
+    }
+  } else if (referencePath.isIdentifier()) {
+    // Replace all non-JSX tag references with the dom tag string literal
+    referencePath.replaceWith(t.stringLiteral(domTag));
+  }
+}
+
 export default function transform({types: t}) {
   let lemonStylesImported = false;
   let lemonResetStylesIdentifier;
@@ -29,77 +113,33 @@ export default function transform({types: t}) {
           const specifiers = path.node.specifiers;
 
           specifiers.forEach((specifier) => {
-            let domTag = specifier.imported.name.toLowerCase();
-            if (domTag === 'domobject') {
-              domTag = 'object';
+            if (specifier.type === 'ImportNamespaceSpecifier') {
+              const moduleLocalName = specifier.local.name;
+              const moduleBindings = path.scope.bindings[moduleLocalName];
+              moduleBindings.referencePaths.forEach((referencePath) => {
+                const domTag = lemonTagToDomTag(
+                  referencePath.parent.property.name
+                );
+                replaceDomTagReferencePath({
+                  t,
+                  lemonResetStylesIdentifier,
+                  referencePath: referencePath.parentPath,
+                  domTag
+                });
+              });
+            } else {
+              const domTag = lemonTagToDomTag(specifier.imported.name);
+              const localName = specifier.local.name;
+              const binding = path.scope.bindings[localName];
+              binding.referencePaths.forEach((referencePath) => {
+                replaceDomTagReferencePath({
+                  t,
+                  lemonResetStylesIdentifier,
+                  referencePath,
+                  domTag
+                });
+              });
             }
-
-            const className = `lemon--${domTag}`;
-            const localName = specifier.local.name;
-            const binding = path.scope.bindings[localName];
-            binding.referencePaths.forEach((referencePath) => {
-              if (referencePath.isJSXIdentifier()) {
-                referencePath.node.name = domTag;
-                if (referencePath.container.type === 'JSXOpeningElement') {
-                  // Replace all tagRef attributes with regular refs
-                  referencePath.container.attributes.forEach((attribute) => {
-                    if (
-                      attribute.type === 'JSXAttribute' &&
-                      attribute.name.name === 'tagRef'
-                    ) {
-                      attribute.name.name = 'ref';
-                    }
-                  });
-
-                  // Add or prepend className
-                  const classNameAttrIdx = referencePath.parent.attributes.findIndex(
-                    (attribute) =>
-                      attribute.type === 'JSXAttribute' &&
-                      attribute.name.name === 'className'
-                  );
-                  if (classNameAttrIdx >= 0) {
-                    const attrValuePath = referencePath.parentPath.get(
-                      `attributes.${classNameAttrIdx}.value`
-                    );
-                    attrValuePath.replaceWith(
-                      t.jsxExpressionContainer(
-                        t.binaryExpression(
-                          '+',
-                          t.memberExpression(
-                            lemonResetStylesIdentifier,
-                            t.stringLiteral(className),
-                            true
-                          ),
-                          t.binaryExpression(
-                            '+',
-                            t.stringLiteral(' '),
-                            attrValuePath.isJSXExpressionContainer()
-                              ? attrValuePath.node.expression
-                              : attrValuePath.node
-                          )
-                        )
-                      )
-                    );
-                  } else {
-                    referencePath.parent.attributes.push(
-                      t.jsxAttribute(
-                        t.jsxIdentifier('className'),
-                        t.jsxExpressionContainer(
-                          t.memberExpression(
-                            lemonResetStylesIdentifier,
-                            t.stringLiteral(className),
-                            true
-                          )
-                        )
-                      )
-                    );
-                  }
-                }
-              } else if (referencePath.isIdentifier()) {
-                // Replace all non-JSX tag references with the dom tag string literal
-                referencePath.replaceWith(t.stringLiteral(domTag));
-              }
-            });
           });
 
           // Remove the imports of Lemon Reset tags
