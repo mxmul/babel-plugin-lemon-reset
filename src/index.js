@@ -83,31 +83,28 @@ function replaceDomTagReferencePath({
 }
 
 export default function transform({types: t}) {
-  let lemonStylesImported = false;
-  let lemonResetStylesIdentifier;
-
   return {
     name: 'babel-plugin-lemon-reset',
     inherits: require('babel-plugin-syntax-jsx'),
     visitor: {
       Program(path) {
-        lemonResetStylesIdentifier = path.scope.generateUidIdentifier(
+        this.lemonResetStylesIdentifier = path.scope.generateUidIdentifier(
           'lemonStyles'
         );
       },
       ImportDeclaration(path) {
         if (path.node.source.value === 'lemon-reset') {
           // Inject an import of the lemon-reset CSS if this is the first occurence.
-          if (!lemonStylesImported) {
+          if (!this.lemonStylesImported) {
             path.insertBefore(
               t.importDeclaration(
-                [t.importDefaultSpecifier(lemonResetStylesIdentifier)],
+                [t.importDefaultSpecifier(this.lemonResetStylesIdentifier)],
                 t.stringLiteral(
                   'lemon-reset/lib/components/LemonReset/LemonReset.css'
                 )
               )
             );
-            lemonStylesImported = true;
+            this.lemonStylesImported = true;
           }
 
           const specifiers = path.node.specifiers;
@@ -123,7 +120,7 @@ export default function transform({types: t}) {
                   );
                   replaceDomTagReferencePath({
                     t,
-                    lemonResetStylesIdentifier,
+                    lemonResetStylesIdentifier: this.lemonResetStylesIdentifier,
                     referencePath: referencePath.parentPath,
                     domTag
                   });
@@ -136,7 +133,7 @@ export default function transform({types: t}) {
               binding.referencePaths.forEach((referencePath) => {
                 replaceDomTagReferencePath({
                   t,
-                  lemonResetStylesIdentifier,
+                  lemonResetStylesIdentifier: this.lemonResetStylesIdentifier,
                   referencePath,
                   domTag
                 });
