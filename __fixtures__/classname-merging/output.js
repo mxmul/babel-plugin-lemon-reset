@@ -1,5 +1,6 @@
 import React from "react";
 import _lemonStyles from "lemon-reset/lib/components/LemonReset/LemonReset.css";
+import { A, Div } from "lemon-reset";
 
 export function App({ linkClasses }) {
   return (

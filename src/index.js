@@ -76,9 +76,6 @@ function replaceDomTagReferencePath({
         );
       }
     }
-  } else if (!referencePath.parent.type.includes('Type')) {
-    // Replace all non-JSX tag references with the dom tag string literal
-    referencePath.replaceWith(t.stringLiteral(domTag));
   }
 }
 
@@ -140,9 +137,6 @@ export default function transform({types: t}) {
               });
             }
           });
-
-          // Remove the imports of Lemon Reset tags
-          path.remove();
         }
       }
     }

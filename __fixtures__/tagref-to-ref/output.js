@@ -1,5 +1,6 @@
 import React from "react";
 import _lemonStyles from "lemon-reset/lib/components/LemonReset/LemonReset.css";
+import { A } from "lemon-reset";
 
 export function App() {
   const anchorRef = React.useRef();
